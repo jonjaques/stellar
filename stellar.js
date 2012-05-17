@@ -37,8 +37,8 @@ Stellar.client.init = function() {
 
 Stellar.client.linkHandler = function() {
   $('body').on('click', 'a', function(e){
-    link = $(this).attr('href');
-    if(!link.match(/^(?:https?|mailto):\/\/.*/) && !link.match(/^#.*/)) {
+    var link = $(this).attr('href');
+    if(typeof(link)!=='undefined' && !link.match(/^(?:https?|mailto):\/\/.*/) && !link.match(/^#.*/)) {
       e.preventDefault();
       Stellar.log('Link clicked');
       Stellar.redirect(link);
@@ -91,12 +91,12 @@ Stellar.log = function(message) {
 };
 
 Stellar.Controller = function(name) {
-  self = this;
+  var self = this;
   Stellar._controllers[name] = self;
 };
 
 Stellar.Collection = function(name, manager, driver) {
-  collection = new Meteor.Collection(name, manager, driver);
+  var collection = new Meteor.Collection(name, manager, driver);
   if(Meteor.is_server) {
     Meteor.startup(function () {
       _.each(['insert', 'update', 'remove'], function(method) {
@@ -127,7 +127,7 @@ if(Meteor.is_server) {
 
   //This is not a public method at all, never make it public
   Stellar.session.update = function(key, data) {
-    newquay = generateRandomKey(); //Generate a random key to stop session fixation, client will need to update their copy.
+    var newquay = generateRandomKey(); //Generate a random key to stop session fixation, client will need to update their copy.
     serverSession = Stellar.ServerSessions.update({key: key}, {$set: {key: newquay, data: data}});
     return newquay;
   }
@@ -145,7 +145,7 @@ if(Meteor.is_server) {
   //This is not a public method at all, never make it public
   Stellar.session.get = function(key) {
     if(serverSession = Stellar.ServerSessions.findOne({key: key})) {
-      now = new Date();
+      var now = new Date();
       if(serverSession.expires < now) {
         Stellar.session.garbageCollection();
         throw new Meteor.Error(401, 'Session timeout');
@@ -160,7 +160,7 @@ if(Meteor.is_server) {
 
   //Clears all expired sessions
   Stellar.session.garbageCollection = function() {
-    now = new Date();
+    var now = new Date();
     Stellar.ServerSessions.remove({expires: {$lt: now}})
   };
 
@@ -238,7 +238,7 @@ Stellar.page.call = function() {
   Stellar.log(Stellar.page);
   if(Stellar._controllers[Stellar.page.controller]) { //TODO fix missing error
     Stellar.log('Controller');
-    controllerObj = Stellar._controllers[Stellar.page.controller];
+    var controllerObj = Stellar._controllers[Stellar.page.controller];
     if(controllerObj[Stellar.page.action]) {
       Stellar.log('Action');
       controllerObj[Stellar.page.action]();
