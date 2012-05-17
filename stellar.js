@@ -82,8 +82,11 @@ Stellar.logPageLoad = function(path) {
 
 //This will allow us to turn logs off quicker
 Stellar.log = function(message) {
-  if(console && console.log) {
-    console.log(message);
+  var args = Stellar.log.arguments;
+  for(var i = 0; i < args.length; i++) {
+    if(console && console.log) {
+      console.log(args[i]);
+    }
   }
 };
 
