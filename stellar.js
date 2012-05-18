@@ -59,7 +59,7 @@ Stellar.client.registerHelper = function(name, func) {
 Stellar.navigate = function(path, load) {
   Stellar.log('Navigate to:' + path);
   Stellar.logPageLoad(path);
-  Router.navigate(path, load);
+  Stellar.Router.navigate(path, load);
 };
 
 Stellar.render = function(template, properties) {
@@ -120,14 +120,14 @@ if(Meteor.is_server) {
     var key = Stellar.session.generateRandomKey();
     var expires = new Date();
     expires.setDate(expires.getDate()+5);
-    serverSession = Stellar.ServerSessions.insert({data: data, created: new Date(), key: key, expires: expires}); //Set expire time to now to check this works
+    Stellar.serverSession = Stellar.ServerSessions.insert({data: data, created: new Date(), key: key, expires: expires}); //Set expire time to now to check this works
     return key;
   };
 
   //This is not a public method at all, never make it public
   Stellar.session.update = function(key, data) {
     var newquay = generateRandomKey(); //Generate a random key to stop session fixation, client will need to update their copy.
-    serverSession = Stellar.ServerSessions.update({key: key}, {$set: {key: newquay, data: data}});
+    Stellar.serverSession = Stellar.ServerSessions.update({key: key}, {$set: {key: newquay, data: data}});
     return newquay;
   }
 
@@ -143,14 +143,14 @@ if(Meteor.is_server) {
 
   //This is not a public method at all, never make it public
   Stellar.session.get = function(key) {
-    if(serverSession = Stellar.ServerSessions.findOne({key: key})) {
+    if(Stellar.serverSession = Stellar.ServerSessions.findOne({key: key})) {
       var now = new Date();
-      if(serverSession.expires < now) {
+      if(Stellar.serverSession.expires < now) {
         Stellar.session.garbageCollection();
         throw new Meteor.Error(401, 'Session timeout');
         return false;
       }
-      return serverSession;
+      return Stellar.serverSession;
     } else {
       throw new Meteor.Error(401, 'Invalid session');
       return false;
@@ -190,7 +190,7 @@ Stellar.page.set = function(controller, action) {
     action = 'index';
   }
 
-  params = {};
+  var params = {};
   if(action.indexOf('?') !== -1) {
     var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
     for(var i = 0; i < hashes.length; i++) {
@@ -201,7 +201,7 @@ Stellar.page.set = function(controller, action) {
     action = action.slice(0, action.indexOf('?'));
   }
 
-  actionBits = action.split('#');
+  var actionBits = action.split('#');
   action = actionBits[0];
   if(actionBits[1]) {
     params['hash'] = actionBits[1];
@@ -270,32 +270,35 @@ Stellar.client.registerHelper('stellar_page', function() {
   return '';
 });
 
-if(Meteor.is_client) {
-  //This needs to be called so all the controllers are initialised
-  $(window).load(function() {
-    Stellar.client.init();
-  });
+(function(){
+  if(Meteor.is_client) {
+    //This needs to be called so all the controllers are initialised
+    $(window).load(function() {
+      Stellar.client.init();
+    });
 
-  StellarRouter = Backbone.Router.extend({
-    routes: {
-      ":controller/:action": "actionPage",
-      ":contoller/:action/": "actionPage",
-      "/": "homePage",
-      "": "homePage",
-      ":controller": "basicPage",
-      ":controller/": "basicPage",
-    },
-    homePage: function() {
-      Stellar.page.set('home');
-    },
-    basicPage: function(controller) {
-      Stellar.page.set(controller);
-    },
-    actionPage: function(controller, action) {
-      Stellar.page.set(controller, action);
-    }
-  });
-  Router = new StellarRouter;
+    var StellarRouter = Backbone.Router.extend({
+      routes: {
+        ":controller/:action": "actionPage",
+        ":contoller/:action/": "actionPage",
+        "/": "homePage",
+        "": "homePage",
+        ":controller": "basicPage",
+        ":controller/": "basicPage",
+      },
+      homePage: function() {
+        Stellar.page.set('home');
+      },
+      basicPage: function(controller) {
+        Stellar.page.set(controller);
+      },
+      actionPage: function(controller, action) {
+        Stellar.page.set(controller, action);
+      }
+    });
 
-  Backbone.history.start({pushState: true});
-}
+    Stellar.Router = new StellarRouter;
+
+    Backbone.history.start({pushState: true});
+  }
+})()
