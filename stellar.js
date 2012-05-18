@@ -63,8 +63,7 @@ Stellar.navigate = function(path, load) {
 };
 
 Stellar.render = function(template, properties) {
-  Stellar.log('Render called: ');
-  Stellar.log(template);
+  Stellar.log('Render called: ' + template);
   if(properties) {
     _.each(properties, function(property, key) {
       Stellar.log(key);
